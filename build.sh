@@ -11,7 +11,7 @@ case "$TARGET" in
         export CC=${CROSS}-gcc-10
         export CXX=${CROSS}-g++-10
         OPTFLAGS="-O2 -mcpu=cortex-a53"
-        export SDL_CFLAGS="-I/opt/sdl2/include/SDL2 -D_REENTRANT"
+        export SDL_CFLAGS="-I/opt/sdl2/include -I/opt/sdl2/include/SDL2 -D_REENTRANT"
         export SDL_LIBS="-L/opt/sdl2/lib -lSDL2"
         ;;
     a30)
