@@ -10,8 +10,9 @@ case "$TARGET" in
         CROSS=aarch64-linux-gnu
         export CC=${CROSS}-gcc-10
         export CXX=${CROSS}-g++-10
-        export PKG_CONFIG_LIBDIR=/usr/lib/${CROSS}/pkgconfig
         OPTFLAGS="-O2 -mcpu=cortex-a53"
+        export SDL_CFLAGS="-I/opt/sdl2/include/SDL2 -D_REENTRANT"
+        export SDL_LIBS="-L/opt/sdl2/lib -lSDL2"
         ;;
     a30)
         TOOLCHAIN=/opt/a30
@@ -24,7 +25,7 @@ case "$TARGET" in
         export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
         OPTFLAGS="-O2 -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard"
         export SDL_CFLAGS="-I$SYSROOT/usr/include/SDL2 -D_REENTRANT"
-        export SDL_LIBS="-lSDL2"
+        export SDL_LIBS="-lSDL2 -lpthread"
         ;;
     *)
         echo "unknown TARGET $TARGET"; exit 1 ;;

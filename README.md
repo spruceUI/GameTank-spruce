@@ -26,6 +26,8 @@ GameTankEmulator     # standalone binary, libstdc++ linked statically
 commit_hash.txt      # upstream commit it was built from
 ```
 
+The binary links against the device's SDL2, which must be 2.0.18 or newer.
+
 ## Patches
 
 `patches/common` applies to every build, `patches/universal` and `patches/a30` to one. `*.patch` files go through `git apply`, `*.py` files are run from the source root.
