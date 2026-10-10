@@ -76,12 +76,6 @@ menu = """		ImGui::SetNextWindowPos(ImVec2(0, 0));
 			ImGui::EndMenu();
 		}
 		ImGui::Checkbox("Instant Blits", &(blitter->instant_mode));
-		if (ImGui::Checkbox("Joystick Paddle", &joystick_paddle_enabled)) {
-			joysticks->SetHeldButtons(0);
-		}
-		if(ImGui::Selectable("Controllers")) {
-			toggleControllerOptionsWindow();
-		}
 		ImGui::Separator();
 		if(ImGui::Selectable("Exit")) {
 			running = false;
