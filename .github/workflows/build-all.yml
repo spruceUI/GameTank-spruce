@@ -1,0 +1,22 @@
+name: Build All
+
+on:
+  workflow_dispatch:
+    inputs:
+      gte_version:
+        description: 'GameTankEmulator commit/tag'
+        default: '9896544460d5bb7dd89c2d2bc0f5c97a6f31d2e0'
+
+permissions:
+  contents: write
+
+jobs:
+  universal:
+    uses: ./.github/workflows/build-universal.yml
+    with:
+      gte_version: ${{ inputs.gte_version }}
+
+  a30:
+    uses: ./.github/workflows/build-a30.yml
+    with:
+      gte_version: ${{ inputs.gte_version }}

@@ -1,0 +1,69 @@
+name: Build GameTankEmulator (A30)
+
+on:
+  workflow_dispatch:
+    inputs:
+      gte_version:
+        description: 'GameTankEmulator commit/tag'
+        default: '9896544460d5bb7dd89c2d2bc0f5c97a6f31d2e0'
+  workflow_call:
+    inputs:
+      gte_version:
+        type: string
+        default: '9896544460d5bb7dd89c2d2bc0f5c97a6f31d2e0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure beta release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="beta-${{ github.ref_name }}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --target "${{ github.ref_name }}" \
+              --title "Beta Build (${{ github.ref_name }})" \
+              --prerelease \
+              --notes "GameTankEmulator binaries built from ${{ github.ref_name }}" \
+            || true
+
+      - name: Download A30 toolchain
+        run: |
+          wget -q -O a30_toolchain-v1.0.tar.gz \
+            "https://github.com/steward-fu/website/releases/download/miyoo-a30/a30_toolchain-v1.0.tar.gz"
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ccache-a30
+          key: ccache-a30-${{ github.sha }}
+          restore-keys: ccache-a30-
+
+      - name: Build Docker image
+        run: docker build -f Dockerfile.a30 -t gte-builder-a30 .
+
+      - name: Build GameTankEmulator
+        run: |
+          mkdir -p output ccache-a30
+          docker run --rm \
+            -e GTE_VERSION=${{ inputs.gte_version || '9896544460d5bb7dd89c2d2bc0f5c97a6f31d2e0' }} \
+            -e CCACHE_DIR=/ccache \
+            -v ${{ github.workspace }}/output:/output \
+            -v ${{ github.workspace }}/ccache-a30:/ccache \
+            gte-builder-a30
+
+      - name: Upload binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd output
+          tar czf ../gametank-a30.tar.gz .
+          cd ..
+          gh release upload "beta-${{ github.ref_name }}" gametank-a30.tar.gz --clobber

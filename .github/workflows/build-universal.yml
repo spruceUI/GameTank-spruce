@@ -1,0 +1,64 @@
+name: Build GameTankEmulator (aarch64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      gte_version:
+        description: 'GameTankEmulator commit/tag'
+        default: '9896544460d5bb7dd89c2d2bc0f5c97a6f31d2e0'
+  workflow_call:
+    inputs:
+      gte_version:
+        type: string
+        default: '9896544460d5bb7dd89c2d2bc0f5c97a6f31d2e0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure beta release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="beta-${{ github.ref_name }}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --target "${{ github.ref_name }}" \
+              --title "Beta Build (${{ github.ref_name }})" \
+              --prerelease \
+              --notes "GameTankEmulator binaries built from ${{ github.ref_name }}" \
+            || true
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ccache-aarch64
+          key: ccache-aarch64-${{ github.sha }}
+          restore-keys: ccache-aarch64-
+
+      - name: Build Docker image
+        run: docker build -f Dockerfile -t gte-builder-aarch64 .
+
+      - name: Build GameTankEmulator
+        run: |
+          mkdir -p output ccache-aarch64
+          docker run --rm \
+            -e GTE_VERSION=${{ inputs.gte_version || '9896544460d5bb7dd89c2d2bc0f5c97a6f31d2e0' }} \
+            -e CCACHE_DIR=/ccache \
+            -v ${{ github.workspace }}/output:/output \
+            -v ${{ github.workspace }}/ccache-aarch64:/ccache \
+            gte-builder-aarch64
+
+      - name: Upload binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd output
+          tar czf ../gametank-aarch64.tar.gz .
+          cd ..
+          gh release upload "beta-${{ github.ref_name }}" gametank-aarch64.tar.gz --clobber
